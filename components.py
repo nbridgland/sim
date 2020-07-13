@@ -1,0 +1,40 @@
+import itertools
+import pandas as pd
+import numpy as np
+
+# Build a warehouse - should have attributes for each x,y coordinate for the hallways.  Forklifts can travel solo, or wait in queues eventually
+# Right now want to keep track of whether occupied or not.
+class FloorPatch:
+    def __init__(self):
+        self.occupied = 0
+
+class Warehouse:
+    def __init__(self, x_dim, y_dim):
+        self.x_dim = x_dim
+        self.y_dim = y_dim
+        for element in itertools.product(range(x_dim), range(y_dim)):
+            setattr(self, str(list(element)), FloorPatch())
+
+
+class Forklift:
+    def __init__(self, start_position, job_list):
+        self.position = start_position
+        self.job_list = job_list
+        self.job_number = 0
+        self.next_update_time = 0
+        self.status = '' #['traveling', 'waiting', 'picking', 'complete']
+
+    def update_travel_time(self, t):
+        if self.job_number == len(self.job_list):
+            self.status = 'complete'
+        else:
+            x, y = self.position
+            end_x, end_y = self.job_list[self.job_number]
+            self.job_number += 1
+            self.next_update_time = np.ceil((t + abs(end_x-x) + abs(end_y - y))*np.random.normal(1, .2, 1)[0])
+            self.position = [end_x, end_y]
+            self.status = 'traveling'
+
+    def update_pick_up_time(self, t):
+        self.next_update_time = t + np.random.choice([10,20])
+        self.status = 'picking'
