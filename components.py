@@ -7,13 +7,26 @@ import numpy as np
 class FloorPatch:
     def __init__(self):
         self.occupied = 0
+        self.forklift_count = 0
+        self.forklift_max = 1
+    def add_forklift(self):
+        self.forklift_count +=1
+        if self.forklift_count >= self.forklift_max:
+            self.occupied = 1
+    def remove_forklift(self):
+        self.forklift_count -=1
+        if self.forklift_count < self.forklift_max:
+            self.occupied = 0
 
 class Warehouse:
-    def __init__(self, x_dim, y_dim):
+    def __init__(self, x_dim, y_dim, receiving, shipping, lab):
         self.x_dim = x_dim
         self.y_dim = y_dim
         for element in itertools.product(range(x_dim), range(y_dim)):
             setattr(self, str(list(element)), FloorPatch())
+        for element in [receiving, shipping, lab]:
+            position = self.__getattribute__(str(element))
+            position.forklift_max = 3
 
 
 class Forklift:

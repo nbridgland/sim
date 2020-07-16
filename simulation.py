@@ -2,13 +2,13 @@ import pandas as pd
 from components import Warehouse, Forklift
 
 class Simulation:
-    def __init__(self, warehouse_x_dim, warehouse_y_dim, n_forklifts, forklift_job_lists):
+    def __init__(self, warehouse_x_dim, warehouse_y_dim, receiving, shipping, lab, n_forklifts, forklift_job_lists):
         if len(forklift_job_lists) < n_forklifts:
             raise "Need at least as many jobs as forklifts"
         self.n_forklifts = n_forklifts
         self.forklift_start_positions = [[0, 0] for k in range(n_forklifts)]
         self.n_jobs = len(forklift_job_lists)
-        self.warehouse = Warehouse(warehouse_x_dim, warehouse_y_dim)
+        self.warehouse = Warehouse(warehouse_x_dim, warehouse_y_dim, receiving, shipping, lab)
         self.forklift_names=[]
         self.forklift_job_lists=forklift_job_lists
         for k in range(self.n_forklifts):
@@ -28,22 +28,22 @@ class Simulation:
                 if forklift.next_update_time <= t:
                     if (forklift.status == 'traveling') or (forklift.status == 'waiting'):
                         if self.warehouse.__getattribute__(str(forklift.position)).occupied == 0:
-                            self.warehouse.__getattribute__(str(forklift.position)).occupied = 1
+                            self.warehouse.__getattribute__(str(forklift.position)).add_forklift()
                             forklift.update_pick_up_time(t)
                         else:
                             forklift.status = 'waiting'
                     elif forklift.status == 'picking':
-                        self.warehouse.__getattribute__(str(forklift.position)).occupied = 0
+                        self.warehouse.__getattribute__(str(forklift.position)).remove_forklift()
                         forklift.update_travel_time(t)
                         if forklift.status == 'complete':
-                            print("Job completed!")
                             if job_ticker < len(self.forklift_job_lists):
                                 forklift.job_list = self.forklift_job_lists[job_ticker]
                                 forklift.job_number = 0
                                 forklift.update_travel_time(t)
                             job_ticker += 1
+                            print("Time: ", t, " Jobs Completed: ", job_ticker - self.n_forklifts, " Total Jobs: ", len(self.forklift_job_lists))
                 output = output.append([[t, name, forklift.position, forklift.status]])
-                print("Time: ", t, " Jobs Completed: ", job_ticker - self.n_forklifts, " Total Jobs: ", len(self.forklift_job_lists))
+            
             t += 1
         output.columns = ['time', 'name', 'current_destination', 'status']
         output.to_csv(outputfile, index=False)
